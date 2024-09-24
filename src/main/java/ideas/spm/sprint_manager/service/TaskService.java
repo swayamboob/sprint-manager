@@ -9,11 +9,14 @@ import ideas.spm.sprint_manager.repository.EmployeeRepository;
 import ideas.spm.sprint_manager.repository.SprintRepository;
 import ideas.spm.sprint_manager.repository.TaskRepository;
 import ideas.spm.sprint_manager.repository.TeamRepository;
+import ideas.spm.sprint_manager.roles.TaskType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.swing.text.html.Option;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TaskService {
@@ -38,6 +41,17 @@ public class TaskService {
     public Task insertTask(Task task) {
         return taskRepository.save(task);
     }
+    public int updateTaskStatus(int taskId, String taskStatus){
+        boolean exist= taskRepository.existsById(taskId);
+        if(!exist)return 0;
+        else
+        {
+            Task task= taskRepository.findByTaskId(taskId);
+            task.setTaskStatus(taskStatus);
+            task= taskRepository.save(task);
+            return 1;
+        }
+    }
     public Task updateTask(Task updatedTaskData){
         taskRepository.findById(updatedTaskData.getTaskId()).map(task -> {
                     // Update fields using setters
@@ -58,6 +72,8 @@ public class TaskService {
                     if (updatedTaskData.getTaskSprint() != null) {
                         Sprint sprint = sprintRepository.findById(updatedTaskData.getTaskSprint().getSprintId()).orElse(null);
                         task.setTaskSprint(sprint);
+                        System.out.println("entered");
+                        task.setTaskType(TaskType.FRESH);
                     }
                     if (updatedTaskData.getTaskStatus() != null) {
                         task.setTaskStatus(updatedTaskData.getTaskStatus());
@@ -77,7 +93,9 @@ public class TaskService {
         return null;
     }
 
-
+    public List<TaskDTO> getBacklogs(int managerId){
+        return taskRepository.findByTaskCreatedBy_employeeIDAndTaskType(managerId,"BACKLOG");
+    }
     public List<TaskDTO> taskByEmployee(Employee task) {
         return taskRepository.findByTaskAssigned(task);
 
@@ -87,6 +105,21 @@ public class TaskService {
     }
     public boolean findTask(Task task) {
         return taskRepository.existsById(task.getTaskId());
+    }
+    public boolean closeSprintTask(int sprintId, int employeeId){
+        List<Task> tasks= taskRepository.findByTaskSprint_sprintIdAndTaskCreatedBy_employeeID(sprintId,employeeId);
+        for(Task task:tasks ){
+
+            if(!task.getTaskStatus().equals("Completed")){
+                task.setTaskSprint(null);
+                task.setTaskType(TaskType.BACKLOG);
+            }
+            taskRepository.save(task);
+        };
+        Sprint sprint= sprintRepository.findBySprintIdAndStatus(sprintId,"active");
+        sprint.setStatus("completed");
+        sprintRepository.save(sprint);
+        return true;
     }
     public Integer deleteTask(int taskId, int employeeId){
         Task task= taskRepository.findByTaskId(taskId);

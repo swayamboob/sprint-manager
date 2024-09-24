@@ -16,16 +16,35 @@ import java.util.List;
 public class SprintController {
     @Autowired
     SprintService sprintService;
-    @GetMapping("/manager/{managerId}")
+    @GetMapping("/all/manager/{managerId}")
     public List<SprintDTO> getAllSprint(@PathVariable int managerId){
-        return sprintService.getSprints();
+        return sprintService.getSprintCreatedbyManager(managerId);
     }
-    @PostMapping("/insert")
+    @GetMapping("/manager/active/{managerId}")
+    public SprintDTO getSprintActive(@PathVariable int managerId){
+        return sprintService.getActiveSprint(managerId);
+    }
+
+
+    @PostMapping("/manager/insert")
     public Sprint saveSprint(@RequestBody Sprint sprint){
         return sprintService.insertSprint(sprint);
     }
-    @DeleteMapping("/remove/{sprintId}")
-    public Integer deleteSprint(@PathVariable int sprintId){
-        return sprintService.deleteSprint(sprintId);
+    @PutMapping("/manager/update/{sprintId}")
+    public SprintDTO updateSprint(@PathVariable int sprintId, @RequestBody Sprint sprint){
+        return sprintService.updateSprint(sprintId,sprint);
+    }
+
+    @GetMapping("/manager/start/{sprintId}/{employeeId}")
+    public boolean startSprint(@PathVariable int sprintId,@PathVariable int employeeId){
+        return sprintService.startSprint(sprintId,employeeId);
+    }
+    @GetMapping("/manager/get/{sprintId}")
+    public SprintDTO getSprintById(@PathVariable int sprintId){
+        return sprintService.getSprintById(sprintId);
+    }
+    @DeleteMapping("/manager/remove/{sprintId}")
+    public boolean deleteSprint(@PathVariable int sprintId){
+        return (sprintService.deleteSprint(sprintId)==0?false:true) ;
     }
 }

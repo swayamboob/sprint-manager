@@ -18,10 +18,11 @@ public class Task {
     @JoinColumn(name="created_by")
     Employee taskCreatedBy;
     //=========
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
             @JoinColumn(name="sprint_id")
     Sprint taskSprint;
     String taskStatus;
+    String taskType;
     LocalDate taskDeadline;
     LocalDate taskStarted;
     @ManyToOne(fetch = FetchType.EAGER)
@@ -29,7 +30,7 @@ public class Task {
     Team taskTeam;
 
     public Task(){
-
+        this.taskType="FRESH";
     }
     public Task(int taskId, String taskDetails, Employee taskAssigned, Sprint taskSprint, String taskStatus, LocalDate taskDeadline, Team taskTeam) {
         this.taskId = taskId;
@@ -63,6 +64,14 @@ public class Task {
 
     public void setTaskDetails(String taskDetails) {
         this.taskDetails = taskDetails;
+    }
+
+    public String getTaskType() {
+        return taskType;
+    }
+
+    public void setTaskType(String taskType) {
+        this.taskType = taskType;
     }
 
     public Employee getTaskAssigned() {

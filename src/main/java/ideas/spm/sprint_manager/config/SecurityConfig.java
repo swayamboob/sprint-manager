@@ -34,7 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/register", "/h2-console/**").permitAll()
                         .requestMatchers("/admin/**").hasRole(Roles.ROLE_ADMIN)
                         .requestMatchers("/manager/**").hasAnyRole(Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)
-//                        .requestMatchers("/team/**").hasAnyRole(Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)
+//                       .requestMatchers("/team/**").hasAnyRole(Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)
                         .requestMatchers("/task/manager/**").hasAnyRole(Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)
                         .requestMatchers("/task/employee/**").hasAnyRole(Roles.ROLE_EMPLOYEE,Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)
                         .requestMatchers("/employee/**").hasAnyRole(Roles.ROLE_EMPLOYEE,Roles.ROLE_MANAGER,Roles.ROLE_ADMIN)

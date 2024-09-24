@@ -11,14 +11,23 @@ public class Sprint {
     @GeneratedValue(strategy = GenerationType.AUTO)
     int sprintId;
     String sprintName;
+    String sprintGoal;
     LocalDate sprintStart;
     LocalDate sprintEnd;
     @ManyToOne // here made changes to oneto one to many-to-one
     @JoinColumn(name = "employeeid")
     Employee sprintManager;
+
+    String status;
     @OneToMany(mappedBy = "taskSprint")
     List<Task> taskList;
-    String status;
+
+    @PreRemove
+    private void remove(){
+        for(Task task:taskList){
+            task.setTaskSprint(null);
+        }
+    }
 
     public Sprint() {
 
@@ -48,6 +57,14 @@ public class Sprint {
 
     public void setSprintName(String sprintName) {
         this.sprintName = sprintName;
+    }
+
+    public String getSprintGoal() {
+        return sprintGoal;
+    }
+
+    public void setSprintGoal(String sprintGoal) {
+        this.sprintGoal = sprintGoal;
     }
 
     public LocalDate getSprintStart() {

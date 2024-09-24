@@ -13,7 +13,7 @@ public interface TaskDTO {
     LocalDate getTaskDeadline();
     LocalDate getTaskStarted();
     TaskSprint getTaskSprint();
-
+    String getTaskType();
     TaskAssigned getTaskAssigned();
     TaskCreatedBy getTaskCreatedBy();
 
