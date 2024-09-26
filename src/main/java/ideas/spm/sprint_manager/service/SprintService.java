@@ -41,7 +41,7 @@ public class SprintService {
     public Sprint insertSprint(Sprint sprint) {
         boolean exist = sprintRepository.existsById(sprint.getSprintId());
         if (exist) {
-
+//            updateSprint(sprint.getSprintId(),sprint);
         }
         return sprintRepository.save(sprint);
     }

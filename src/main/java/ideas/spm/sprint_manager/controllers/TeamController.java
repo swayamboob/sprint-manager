@@ -32,7 +32,7 @@ public class TeamController {
         return teamService.getTeamByManagerId(managerId);
     }
 
-    @PostMapping("insert")
+    @PostMapping("/manager/insert")
     Team insertTeam(@RequestBody Team team) {
         return teamService.insertTeam(team);
     }

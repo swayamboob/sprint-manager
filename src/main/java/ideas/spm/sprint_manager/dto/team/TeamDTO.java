@@ -26,6 +26,7 @@ public interface TeamDTO {
     interface Task{
         int getTaskId();
         String getTaskDetails();
+        String getTaskStatus();
     }
 
 }
