@@ -1,16 +1,15 @@
 package ideas.spm.sprint_manager.service;
 
 import ideas.spm.sprint_manager.dto.task.TaskDTO;
-import ideas.spm.sprint_manager.entity.Employee;
-import ideas.spm.sprint_manager.entity.Sprint;
-import ideas.spm.sprint_manager.entity.Task;
-import ideas.spm.sprint_manager.entity.Team;
+import ideas.spm.sprint_manager.entity.*;
+import ideas.spm.sprint_manager.exceptions.TaskExceptions.TaskNotFound;
 import ideas.spm.sprint_manager.repository.EmployeeRepository;
 import ideas.spm.sprint_manager.repository.SprintRepository;
 import ideas.spm.sprint_manager.repository.TaskRepository;
 import ideas.spm.sprint_manager.repository.TeamRepository;
 import ideas.spm.sprint_manager.roles.TaskType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -35,7 +34,9 @@ public class TaskService {
     public Task findById( int taskId){
         boolean exist = taskRepository.existsById(taskId);
         if(exist) return taskRepository.findByTaskId(taskId);
-        else return null;
+        else {
+            return null;
+        }
     }
 
     public Task insertTask(Task task) {
@@ -61,6 +62,9 @@ public class TaskService {
                     if (updatedTaskData.getTaskName() != null) {
                         task.setTaskName(updatedTaskData.getTaskName());
                     }
+                    if(updatedTaskData.getStoryPoint()!=0){
+                        task.setStoryPoint(updatedTaskData.getStoryPoint());
+                    }
                     if (updatedTaskData.getTaskAssigned() != null) {
                         Employee assigned = employeeRepository.findById(updatedTaskData.getTaskAssigned().getEmployeeID());
                         task.setTaskAssigned(assigned);
@@ -72,14 +76,13 @@ public class TaskService {
                     if (updatedTaskData.getTaskSprint() != null) {
                         Sprint sprint = sprintRepository.findById(updatedTaskData.getTaskSprint().getSprintId()).orElse(null);
                         task.setTaskSprint(sprint);
-                        System.out.println("entered");
                         task.setTaskType(TaskType.FRESH);
                     }
                     if (updatedTaskData.getTaskStatus() != null) {
                         task.setTaskStatus(updatedTaskData.getTaskStatus());
                     }
                     if (updatedTaskData.getTaskDeadline() != null) {
-                        task.setTaskDeadline(updatedTaskData.getTaskDeadline());
+
                     }
                     if (updatedTaskData.getTaskStarted() != null) {
                         task.setTaskStarted(updatedTaskData.getTaskStarted());
@@ -94,7 +97,7 @@ public class TaskService {
     }
 
     public List<TaskDTO> getBacklogs(int managerId){
-        return taskRepository.findByTaskCreatedBy_employeeIDAndTaskType(managerId,"BACKLOG");
+        return taskRepository.findByTaskCreatedBy_employeeIDAndTaskType(managerId,TaskType.BACKLOG);
     }
     public List<TaskDTO> taskByEmployee(Employee task) {
         return taskRepository.findByTaskAssigned(task);
@@ -121,13 +124,20 @@ public class TaskService {
         sprintRepository.save(sprint);
         return true;
     }
-    public Integer deleteTask(int taskId, int employeeId){
+    public ResponseEntity<?> deleteTask(int taskId, int employeeId){
         Task task= taskRepository.findByTaskId(taskId);
         if(task.getTaskCreatedBy().getEmployeeID()==employeeId){
-            return taskRepository.deleteByTaskId(taskId);
+            int out= taskRepository.deleteByTaskId(taskId);
+            if(out==1)return ResponseEntity.ok(new Response("task deleted successfully"));
+            else new TaskNotFound("Task not deleted");
         }
-        return 0;
+         throw new TaskNotFound("No Task with with EmployeeId") ;
     }
+
+    public List<TaskDTO>getMyTask(int employeeID){
+        return taskRepository.findByTaskAssigned_employeeID(employeeID);
+    }
+
 
 
 }

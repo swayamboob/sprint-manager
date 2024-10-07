@@ -27,6 +27,7 @@ public interface EmployeeDTO {
     }
 
     interface Employee {
+        public int getEmployeeID();
         public String getEmployeeName();
     }
 }

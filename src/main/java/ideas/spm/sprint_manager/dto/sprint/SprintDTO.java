@@ -25,6 +25,7 @@ public interface SprintDTO {
         int getTaskId();
         String getTaskName();
         String getTaskStatus();
+        float getStoryPoint();
         String getTaskDetails();
         Employee getTaskAssigned();
         Team getTaskTeam();

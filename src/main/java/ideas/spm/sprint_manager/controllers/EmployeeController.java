@@ -39,10 +39,15 @@ public class EmployeeController {
     private JwtUtil jwtUtil;
 
     @GetMapping("/manager/all")
-    public List<EmployeeDTO> getAllEmployee() {
-        return employeeService.getEmployee();
+    public ResponseEntity<?> getAllEmployee() {
+        return ResponseEntity.ok(employeeService.getEmployee());
     }
 
+    @GetMapping("/employee/getmanager/{employeeId}")
+    public ResponseEntity<?> getManager(@PathVariable int employeeId){
+//        System.out.println("hit the code");
+        return ResponseEntity.ok(employeeService.getManagerId(employeeId));
+    }
     @GetMapping("/manager/employee/idle")
     public List<EmployeeDTO> getMyEmployee() {
         return employeeService.getEmployeeByTeamAndEmployeeRoleNot(null, "MANAGER");
@@ -54,15 +59,15 @@ public class EmployeeController {
         if (e == null) return ResponseEntity.notFound().build();
         if (changes.containsKey("teamId")) {
             if (e.getTeam() != null)
-                return ResponseEntity.status(404).body(new Response("Alread Present in other team"));
+                return ResponseEntity.status(404).body(new Response("Already Present in other team"));
             e.setTeam(new Team(Integer.parseInt(changes.get("teamId")), null, null, null, null));
             if (employeeService.updateEmployee(e) != null) {
                 return ResponseEntity.ok(e);
             } else {
-                return ResponseEntity.status(404).body(new Response("Error Occured"));
+                return ResponseEntity.status(404).body(new Response("Error Occurred"));
             }
         } else {
-            return ResponseEntity.status(404).body(new Response("Error Occured"));
+            return ResponseEntity.status(404).body(new Response("Error Occurred"));
         }
 
     }
@@ -84,26 +89,25 @@ public class EmployeeController {
         UserDetails userDetails = employeeService.loadUserByUsername(loginRequest.getEmployeeEmail());
         final String jwt = jwtUtil.generateToken(userDetails);
         Employee employee = employeeService.findByEmployeeEmail(userDetails.getUsername());
-        record employeeProfile(String employeeName, int employeeID, String employeeEmail) {
+        record employeeProfile(String employeeName, int employeeID, String employeeEmail,String employeeRole) {
         }
         ;
         record EmployeeDetails(employeeProfile employeeProfile, String jwt) {
         }
         ;
-        return ResponseEntity.ok(new EmployeeDetails(new employeeProfile(employee.getEmployeeName(), employee.getEmployeeID(), employee.getEmployeeEmail()), jwt));
+        return ResponseEntity.ok(new EmployeeDetails(new employeeProfile(employee.getEmployeeName(), employee.getEmployeeID(), employee.getEmployeeEmail(),employee.getEmployeeRole()), jwt));
     }
 
     //    @PutMapping("/update/")
     @DeleteMapping("/remove/{employeeid}")
-    public Integer deleteEmployee(@PathVariable int employeeid) {
-        Integer deletedObject = employeeService.deleteEmployee(employeeid);
-        return deletedObject;
+    public ResponseEntity<?> deleteEmployee(@PathVariable int employeeid) {
+        return ResponseEntity.ok(employeeService.deleteEmployee(employeeid));
     }
 
 
     @GetMapping("/employee/profile/{employeeId}/{employeeEmail}")
-    public EmployeeDTO getProfile(@PathVariable int employeeId, @PathVariable String employeeEmail) {
-        return employeeService.getEmployeeByIdAndEmail(employeeId, employeeEmail);
+    public ResponseEntity<?> getProfile(@PathVariable int employeeId, @PathVariable String employeeEmail) {
+        return ResponseEntity.ok(employeeService.getEmployeeByIdAndEmail(employeeId, employeeEmail));
     }
 
 

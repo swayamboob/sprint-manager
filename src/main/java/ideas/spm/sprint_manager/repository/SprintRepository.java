@@ -16,9 +16,13 @@ public interface SprintRepository extends CrudRepository<Sprint, Integer> {
     SprintDTO findBySprintId(int sprintId);
 
     Integer deleteBySprintId(int sprintId);
+
     List<SprintDTO> findBy();
-    List<SprintDTO>findBySprintManager_employeeID(int employeeID);
-    List<SprintDTO>findByStatusAndSprintManager_employeeID(String Status,int managerId);
+
+    List<SprintDTO> findBySprintManager_employeeID(int employeeID);
+
+    List<SprintDTO> findByStatusAndSprintManager_employeeID(String Status, int managerId);
+
     // Find by sprintStart
     List<SprintDTO> findBySprintStart(LocalDate sprintStart);
 
@@ -34,6 +38,6 @@ public interface SprintRepository extends CrudRepository<Sprint, Integer> {
     //find active status
 
 
-   Sprint findBySprintIdAndStatus(int sprintId, String status);
+    Sprint findBySprintIdAndStatus(int sprintId, String status);
 
 }

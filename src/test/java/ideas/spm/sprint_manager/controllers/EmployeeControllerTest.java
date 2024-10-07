@@ -4,6 +4,7 @@ import ideas.spm.sprint_manager.dto.employee.EmployeeDTO;
 import ideas.spm.sprint_manager.dto.employee.EmployeeLoginDTO;
 import ideas.spm.sprint_manager.dto.employee.UserDTO;
 import ideas.spm.sprint_manager.entity.Employee;
+import ideas.spm.sprint_manager.entity.Response;
 import ideas.spm.sprint_manager.entity.Team;
 import ideas.spm.sprint_manager.service.EmployeeService;
 import ideas.spm.sprint_manager.util.JwtUtil;
@@ -12,10 +13,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +39,8 @@ class EmployeeControllerTest {
     AuthenticationManager authenticationManager;
     @Mock
     JwtUtil jwtUtil;
+    @Mock
+    PasswordEncoder bCyptPasswordEncoder;
 
 
     @Test
@@ -63,14 +68,28 @@ class EmployeeControllerTest {
         when(employee.getTeam()).thenReturn(null);
         employeeController.updateEmployee(1,map);
         verify(employeeService,times(1)).updateEmployee(employee);
+//        ResponseEntity.status(404).body(new Response("Alread Present in other team"));
+        when(employee.getTeam()).thenReturn(new Team(1,null,null,null,null));
+        assertEquals(employeeController.updateEmployee(1,map).getStatusCode(),HttpStatus.NOT_FOUND);
+
+        when(employeeService.updateEmployee(employee)).thenReturn(employee);
+        when(employee.getTeam()).thenReturn(null);
+        assertEquals(employeeController.updateEmployee(1,map).getStatusCode(),HttpStatus.OK);
     }
 
     @Test
     void saveEmployee() {
         Employee employee = mock(Employee.class);
         when(employeeService.findEmployee(employee)).thenReturn(true);
+        when(employee.getEmployeePassword()).thenReturn("password");
         assertNull(employeeController.saveEmployee(employee));
         verify(employeeService, times(1)).findEmployee(employee);
+        when(employeeService.findEmployee(employee)).thenReturn(false);
+        employeeController.saveEmployee(employee);
+        bCyptPasswordEncoder= mock(PasswordEncoder.class);
+//        when(bCyptPasswordEncoder.encode(employee.getEmployeePassword())).thenReturn("xxx");
+        verify(employee,times(1)).setEmployeePassword(bCyptPasswordEncoder.encode(employee.getEmployeePassword()));
+        verify(employeeService,times(1)).saveEmployee(employee);
     }
 
     @Test
@@ -92,9 +111,10 @@ class EmployeeControllerTest {
 
     @Test
     void deleteEmployee() {
-        int employeeid=-1;
-       when( employeeService.deleteEmployee(employeeid)).thenReturn(0);
-       assertEquals(employeeController.deleteEmployee(employeeid),0);
+        int employeeid=1;
+       when( employeeService.deleteEmployee(employeeid)).thenReturn(1);
+       employeeController.deleteEmployee(employeeid);
+       verify(employeeService,times(1)).deleteEmployee(employeeid);
     }
 
     @Test

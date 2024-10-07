@@ -40,4 +40,6 @@ public interface TaskRepository extends CrudRepository<Task,Integer> {
     List<Task>findByTaskSprint_sprintIdAndTaskCreatedBy_employeeID(int sprintId, int employeeId);
 
     List<TaskDTO> findByTaskCreatedBy_employeeIDAndTaskType(int employeeID,String type);
+
+    List<TaskDTO>findByTaskAssigned_employeeID(int employeeId);
 }

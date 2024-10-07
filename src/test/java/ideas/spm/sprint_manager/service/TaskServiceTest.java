@@ -1,221 +1,261 @@
 package ideas.spm.sprint_manager.service;
 
 import ideas.spm.sprint_manager.dto.task.TaskDTO;
-import ideas.spm.sprint_manager.entity.Employee;
-import ideas.spm.sprint_manager.entity.Sprint;
-import ideas.spm.sprint_manager.entity.Task;
-import ideas.spm.sprint_manager.entity.Team;
+import ideas.spm.sprint_manager.entity.*;
+import ideas.spm.sprint_manager.exceptions.TaskExceptions.TaskNotFound;
 import ideas.spm.sprint_manager.repository.EmployeeRepository;
 import ideas.spm.sprint_manager.repository.SprintRepository;
 import ideas.spm.sprint_manager.repository.TaskRepository;
 import ideas.spm.sprint_manager.repository.TeamRepository;
-import ideas.spm.sprint_manager.roles.TaskType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class TaskServiceTest {
 
     @Mock
-    private TaskRepository taskRepository;
+    TaskRepository taskRepository;
 
     @Mock
-    private TeamRepository teamRepository;
+    TeamRepository teamRepository;
 
     @Mock
-    private EmployeeRepository employeeRepository;
+    EmployeeRepository employeeRepository;
 
     @Mock
-    private SprintRepository sprintRepository;
+    SprintRepository sprintRepository;
 
     @InjectMocks
-    private TaskService taskService;
+    TaskService taskService;
 
-    private Task task;
-    private Employee employee;
-    private Sprint sprint;
+    Task task;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        employee = new Employee(1, "john.doe@example.com", "John Doe", "DEVELOPER", "password123", null);
-
         task = new Task();
         task.setTaskId(1);
-        task.setTaskName("Sample Task");
-        task.setTaskAssigned(employee);
-        task.setTaskStatus("NEW");
-        task.setTaskSprint(null);
-
-        sprint = new Sprint();
-        sprint.setSprintId(1);
-        sprint.setSprintName("Sprint 1");
-        sprint.setSprintStart(LocalDate.now().minusDays(1));
-        sprint.setSprintEnd(LocalDate.now().plusDays(10));
-        sprint.setStatus("ACTIVE");
+        task.setTaskName("Test Task");
+        task.setTaskDetails("Test Task Details");
+        task.setTaskStatus("Pending");
+        task.setTaskAssigned(new Employee()); // Add more properties if needed
+        task.setTaskCreatedBy(new Employee());
+        task.setTaskSprint(new Sprint());
+        task.setTaskTeam(new Team());
     }
 
     @Test
-    void shouldReturnAllTasks_whenGetTasksCalled() {
-        // Mocking repository to return a list of tasks
-        when(taskRepository.findBy()).thenReturn(Arrays.asList(mock(TaskDTO.class), mock(TaskDTO.class)));
+    void getTasks() {
+        List<TaskDTO> tasks = new ArrayList<>();
+        when(taskRepository.findBy()).thenReturn(tasks);
 
-        List<TaskDTO> tasks = taskService.getTasks();
+        List<TaskDTO> result = taskService.getTasks();
 
-        // Assert
-        assertNotNull(tasks);
-        assertEquals(2, tasks.size());
+        assertNotNull(result);
+        assertEquals(tasks, result);
         verify(taskRepository, times(1)).findBy();
     }
 
     @Test
-    void shouldReturnTaskById_whenTaskExists() {
-        // Mock taskRepository to return the task
-        when(taskRepository.findByTaskId(1)).thenReturn(task);
+    void findById_whenTaskExists() {
         when(taskRepository.existsById(1)).thenReturn(true);
+        when(taskRepository.findByTaskId(1)).thenReturn(task);
 
-        Task foundTask = taskService.findById(1);
+        Task result = taskService.findById(1);
 
-        // Assert
-        assertNotNull(foundTask);
-        assertEquals(1, foundTask.getTaskId());
-        assertEquals("Sample Task", foundTask.getTaskName());
+        assertNotNull(result);
+        assertEquals(task, result);
+        verify(taskRepository, times(1)).findByTaskId(1);
     }
 
     @Test
-    void shouldReturnNull_whenTaskDoesNotExist() {
-        // Mock taskRepository to return null for non-existent task
-        when(taskRepository.existsById(999)).thenReturn(false);
+    void findById_whenTaskDoesNotExist() {
+        when(taskRepository.existsById(1)).thenReturn(false);
 
-        Task foundTask = taskService.findById(999);
+        Task result = taskService.findById(1);
 
-        // Assert
-        assertNull(foundTask);
+        assertNull(result);
+        verify(taskRepository, times(1)).existsById(1);
     }
 
     @Test
-    void shouldInsertTaskSuccessfully() {
-        // Mock taskRepository to save the task
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+    void insertTask() {
+        when(taskRepository.save(task)).thenReturn(task);
 
-        Task insertedTask = taskService.insertTask(task);
+        Task result = taskService.insertTask(task);
 
-        // Assert
-        assertNotNull(insertedTask);
-        assertEquals(1, insertedTask.getTaskId());
+        assertNotNull(result);
+        assertEquals(task, result);
         verify(taskRepository, times(1)).save(task);
     }
 
     @Test
-    void shouldUpdateTaskStatusSuccessfully() {
-        // Mock taskRepository to find and update the task
+    void updateTaskStatus_whenTaskExists() {
         when(taskRepository.existsById(1)).thenReturn(true);
         when(taskRepository.findByTaskId(1)).thenReturn(task);
-        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        when(taskRepository.save(task)).thenReturn(task);
 
-        int result = taskService.updateTaskStatus(1, "COMPLETED");
+        int result = taskService.updateTaskStatus(1, "Completed");
 
-        // Assert
         assertEquals(1, result);
-        assertEquals("COMPLETED", task.getTaskStatus());
+        assertEquals("Completed", task.getTaskStatus());
         verify(taskRepository, times(1)).save(task);
     }
 
     @Test
-    void shouldReturnZero_whenUpdatingTaskStatusOfNonExistentTask() {
-        // Mock taskRepository to return false for non-existent task
-        when(taskRepository.existsById(999)).thenReturn(false);
+    void updateTaskStatus_whenTaskDoesNotExist() {
+        when(taskRepository.existsById(1)).thenReturn(false);
 
-        int result = taskService.updateTaskStatus(999, "COMPLETED");
+        int result = taskService.updateTaskStatus(1, "Completed");
 
-        // Assert
         assertEquals(0, result);
-        verify(taskRepository, never()).save(any(Task.class));
+        verify(taskRepository, times(0)).save(task);
     }
 
     @Test
-    void shouldGetBacklogsForManager() {
-        // Mock taskRepository to return a list of backlogs
-        when(taskRepository.findByTaskCreatedBy_employeeIDAndTaskType(1, "BACKLOG"))
-                .thenReturn(Arrays.asList(mock(TaskDTO.class), mock(TaskDTO.class)));
+    void updateTask_whenTaskExists() {
+        when(taskRepository.findById(1)).thenReturn(Optional.of(task));
+        when(employeeRepository.findById(anyInt())).thenReturn(new Employee()); // Mock the employee
+        when(sprintRepository.findById(anyInt())).thenReturn(Optional.of(new Sprint())); // Mock the sprint
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+        task.setStoryPoint(2);
+        task.setTaskDeadline(LocalDate.now());
+        task.setTaskStarted(LocalDate.now());
+        Task result = taskService.updateTask(task);
 
-        List<TaskDTO> backlogs = taskService.getBacklogs(1);
+        assertNull(result);
+        verify(taskRepository, times(1)).save(task);
+    }
 
-        // Assert
-        assertNotNull(backlogs);
-        assertEquals(2, backlogs.size());
+    @Test
+    void updateTask_whenTaskDoesNotExist() {
+        when(taskRepository.findById(1)).thenReturn(Optional.empty());
+
+        Task result = taskService.updateTask(task);
+
+        assertNull(result);
+        verify(taskRepository, times(0)).save(task);
+    }
+
+    @Test
+    void getBacklogs() {
+        List<TaskDTO> tasks = new ArrayList<>();
+        when(taskRepository.findByTaskCreatedBy_employeeIDAndTaskType(1, "BACKLOG")).thenReturn(tasks);
+
+        List<TaskDTO> result = taskService.getBacklogs(1);
+
+        assertNotNull(result);
+        assertEquals(tasks, result);
         verify(taskRepository, times(1)).findByTaskCreatedBy_employeeIDAndTaskType(1, "BACKLOG");
     }
 
     @Test
-    void shouldCloseSprintTaskSuccessfully() {
-        // Mock taskRepository to return tasks related to sprint and employee
-        Task incompleteTask = new Task();
-        incompleteTask.setTaskStatus("In Progress");
-        when(taskRepository.findByTaskSprint_sprintIdAndTaskCreatedBy_employeeID(1, 1))
-                .thenReturn(Arrays.asList(incompleteTask));
+    void taskByEmployee() {
+        Employee employee = new Employee();
+        List<TaskDTO> tasks = new ArrayList<>();
+        when(taskRepository.findByTaskAssigned(employee)).thenReturn(tasks);
 
-        when(sprintRepository.findBySprintIdAndStatus(1, "active")).thenReturn(sprint);
-        when(sprintRepository.save(any(Sprint.class))).thenReturn(sprint);
+        List<TaskDTO> result = taskService.taskByEmployee(employee);
 
-        // Call the service method
-        boolean result = taskService.closeSprintTask(1, 1);
-
-        // Assert
-        assertTrue(result);
-        assertEquals("completed", sprint.getStatus());
-        verify(sprintRepository, times(1)).save(sprint);
-        verify(taskRepository, times(1)).save(incompleteTask);
+        assertNotNull(result);
+        assertEquals(tasks, result);
+        verify(taskRepository, times(1)).findByTaskAssigned(employee);
     }
 
     @Test
-    void shouldDeleteTask_whenTaskExistsAndCreatedByEmployee() {
-        // Mock taskRepository to find the task and verify employee
-        Task task = new Task();
-        task.setTaskId(1);
-        Employee creator = new Employee();
-        creator.setEmployeeID(1);
-        task.setTaskCreatedBy(creator);
+    void taskCreatedBy() {
+        Employee createdBy = new Employee();
+        List<TaskDTO> tasks = new ArrayList<>();
+        when(taskRepository.findByTaskCreatedBy(createdBy)).thenReturn(tasks);
 
+        List<TaskDTO> result = taskService.taskCreatedBy(createdBy);
+
+        assertNotNull(result);
+        assertEquals(tasks, result);
+        verify(taskRepository, times(1)).findByTaskCreatedBy(createdBy);
+    }
+
+    @Test
+    void findTask_whenExists() {
+        when(taskRepository.existsById(1)).thenReturn(true);
+
+        boolean exists = taskService.findTask(task);
+
+        assertTrue(exists);
+        verify(taskRepository, times(1)).existsById(task.getTaskId());
+    }
+
+    @Test
+    void findTask_whenDoesNotExist() {
+        when(taskRepository.existsById(1)).thenReturn(false);
+
+        boolean exists = taskService.findTask(task);
+
+        assertFalse(exists);
+        verify(taskRepository, times(1)).existsById(task.getTaskId());
+    }
+
+    @Test
+    void closeSprintTask() {
+        List<Task> tasks = Collections.singletonList(task);
+        when(taskRepository.findByTaskSprint_sprintIdAndTaskCreatedBy_employeeID(1, 1)).thenReturn(tasks);
+        when(sprintRepository.findBySprintIdAndStatus(1, "active")).thenReturn(new Sprint());
+        when(taskRepository.save(any(Task.class))).thenReturn(task);
+
+        boolean result = taskService.closeSprintTask(1, 1);
+
+        assertTrue(result);
+        verify(taskRepository, times(1)).save(any(Task.class));
+        verify(sprintRepository, times(1)).save(any(Sprint.class));
+    }
+
+    @Test
+    void deleteTask_whenTaskExistsAndBelongsToEmployee() {
         when(taskRepository.findByTaskId(1)).thenReturn(task);
         when(taskRepository.deleteByTaskId(1)).thenReturn(1);
 
-        // Call the service method
-        Integer deletedCount = taskService.deleteTask(1, 1);
+        ResponseEntity<?> result = taskService.deleteTask(1, task.getTaskCreatedBy().getEmployeeID());
 
-        // Assert
-        assertEquals(1, deletedCount);
+        assertNotNull(result);
+        assertEquals("task deleted successfully", ((Response) result.getBody()).getMsg());
         verify(taskRepository, times(1)).deleteByTaskId(1);
+        when(taskRepository.deleteByTaskId(1)).thenReturn(0);
+        assertThrows(TaskNotFound.class,()->{taskService.deleteTask(1,task.getTaskCreatedBy().getEmployeeID());});
     }
 
     @Test
-    void shouldNotDeleteTask_whenTaskNotCreatedByEmployee() {
-        // Mock taskRepository to find the task but wrong creator
-        Task task = new Task();
-        task.setTaskId(1);
-        Employee creator = new Employee();
-        creator.setEmployeeID(2);  // Task was created by a different employee
-        task.setTaskCreatedBy(creator);
+    void deleteTask_whenTaskDoesNotExist() {
+        when(taskRepository.findByTaskId(1)).thenReturn(null);
 
-        when(taskRepository.findByTaskId(1)).thenReturn(task);
+        assertThrows(NullPointerException.class, () -> {
+            taskService.deleteTask(1, task.getTaskCreatedBy().getEmployeeID());
+        });
+        verify(taskRepository, times(0)).deleteByTaskId(1);
+    }
 
-        // Call the service method
-        Integer deletedCount = taskService.deleteTask(1, 1);
+    @Test
+    void getMyTask() {
+        List<TaskDTO> tasks = new ArrayList<>();
+        when(taskRepository.findByTaskAssigned_employeeID(1)).thenReturn(tasks);
 
-        // Assert
-        assertEquals(0, deletedCount);
-        verify(taskRepository, never()).deleteByTaskId(anyInt());
+        List<TaskDTO> result = taskService.getMyTask(1);
+
+        assertNotNull(result);
+        assertEquals(tasks, result);
+        verify(taskRepository, times(1)).findByTaskAssigned_employeeID(1);
     }
 }

@@ -3,14 +3,15 @@ package ideas.spm.sprint_manager.service;
 import ideas.spm.sprint_manager.dto.employee.EmployeeDTO;
 import ideas.spm.sprint_manager.entity.Employee;
 import ideas.spm.sprint_manager.entity.Team;
+import ideas.spm.sprint_manager.exceptions.EmployeeExceptions.EmployeeNotFoundException;
 import ideas.spm.sprint_manager.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -136,5 +137,102 @@ class EmployeeServiceTest {
         verify(employeeRepository, times(1)).existsById(employee.getEmployeeID());  // Verify that existsById was called
     }
 
-    // Additional test cases can be added for methods like findByEmployeeEmail and loadUserByUsername
+    @Test
+    void getEmployeeByIdAndEmail_whenEmployeeExists() {
+        int employeeId = 1;
+        String email = "test@example.com";
+        EmployeeDTO employeeDTO = mock(EmployeeDTO.class);
+        Employee employee = new Employee();
+        employee.setEmployeeID(employeeId);
+        employee.setEmployeeEmail(email);
+
+        when(employeeRepository.findByEmployeeIDAndEmployeeEmail(employeeId, email)).thenReturn(Optional.of(employeeDTO));
+
+        EmployeeDTO result = employeeService.getEmployeeByIdAndEmail(employeeId, email);
+
+        assertEquals(employeeDTO, result);  // Assert that the retrieved employee DTO is as expected
+        verify(employeeRepository, times(1)).findByEmployeeIDAndEmployeeEmail(employeeId, email);  // Verify that the method was called
+    }
+
+    @Test
+    void getEmployeeByIdAndEmail_whenEmployeeDoesNotExist() {
+        int employeeId = 1;
+        String email = "test@example.com";
+
+        when(employeeRepository.findByEmployeeIDAndEmployeeEmail(employeeId, email)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> employeeService.getEmployeeByIdAndEmail(employeeId, email));  // Assert that the exception is thrown
+    }
+
+    @Test
+    void getManagerId_whenEmployeeHasTeam() {
+        int employeeId = 1;
+        Employee employee = new Employee();
+        employee.setEmployeeID(employeeId);
+        Team team = new Team();
+        Employee manager = new Employee();
+        manager.setEmployeeID(2);
+        team.setTeamManager(manager);
+        employee.setTeam(team);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(employee);
+
+        int managerId = employeeService.getManagerId(employeeId);
+
+        assertEquals(2, managerId);  // Assert that the correct manager ID is returned
+    }
+
+    @Test
+    void getManagerId_whenEmployeeHasNoTeam() {
+        int employeeId = 1;
+        Employee employee = new Employee();
+        employee.setEmployeeID(employeeId);
+        employee.setTeam(null);  // No team associated
+
+        when(employeeRepository.findById(employeeId)).thenReturn(employee);
+
+        int managerId = employeeService.getManagerId(employeeId);
+
+        assertEquals(-1, managerId);  // Assert that -1 is returned when there is no team
+    }
+
+    @Test
+    void findByEmployeeEmail_whenEmployeeExists() {
+        String email = "test@example.com";
+        Employee employee = new Employee();
+        employee.setEmployeeEmail(email);
+
+        when(employeeRepository.findByEmployeeEmail(email)).thenReturn(employee);
+
+        Employee result = employeeService.findByEmployeeEmail(email);
+
+        assertEquals(employee, result);  // Assert that the retrieved employee is as expected
+        verify(employeeRepository, times(1)).findByEmployeeEmail(email);  // Verify that the method was called
+    }
+
+    @Test
+    void findByEmployeeEmail_whenEmployeeDoesNotExist() {
+        String email = "test@example.com";
+
+        when(employeeRepository.findByEmployeeEmail(email)).thenReturn(null);
+
+        Employee result = employeeService.findByEmployeeEmail(email);
+
+        assertNull(result);  // Assert that the result is null when employee does not exist
+    }
+
+
+    @Test
+    void getEmployeeByTeamAndEmployeeRoleNot() {
+        Team team= new Team(1,null,null,null,null);
+        employeeService.getEmployeeByTeamAndEmployeeRoleNot(team,"MANAGER");
+        verify(employeeRepository,times(1)).findByTeamAndEmployeeRoleNot(team,"MANAGER" );
+    }
+    @Test
+    void loadUserByUsername(){
+        when(employeeRepository.findByEmployeeEmail("username")).thenReturn(null);
+       assertThrows(UsernameNotFoundException.class,()->{employeeService.loadUserByUsername("username");});
+
+    }
+
 }

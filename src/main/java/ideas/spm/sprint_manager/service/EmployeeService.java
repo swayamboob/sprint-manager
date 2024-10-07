@@ -3,6 +3,7 @@ package ideas.spm.sprint_manager.service;
 import ideas.spm.sprint_manager.dto.employee.EmployeeDTO;
 import ideas.spm.sprint_manager.entity.Employee;
 import ideas.spm.sprint_manager.entity.Team;
+import ideas.spm.sprint_manager.exceptions.EmployeeExceptions.EmployeeNotFoundException;
 import ideas.spm.sprint_manager.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,26 +29,36 @@ public class EmployeeService implements UserDetailsService {
         if (exists) return null;
         return employeeRepository.save(employee);
     }
-    public Employee updateEmployee(Employee employee){
-        boolean exists= employeeRepository.existsById(employee.getEmployeeID());
-        if(!exists)return null;
+
+    public Employee updateEmployee(Employee employee) {
+        boolean exists = employeeRepository.existsById(employee.getEmployeeID());
+        if (!exists) return null;
         return employeeRepository.save(employee);
     }
-    public Employee getEmployeeById(int employeeId){
+
+    public Employee getEmployeeById(int employeeId) {
         return employeeRepository.findById(employeeId);
     }
-    public EmployeeDTO getEmployeeByIdAndEmail(int id, String email){
-        return employeeRepository.findByEmployeeIDAndEmployeeEmail(id,email);
+
+    public EmployeeDTO getEmployeeByIdAndEmail(int id, String email) {
+        return employeeRepository.findByEmployeeIDAndEmployeeEmail(id, email).orElseThrow(()-> new EmployeeNotFoundException("Employee with id:"+ id +" email:"+email+" not present"));
+    }
+
+    public int getManagerId(int employeeId) {
+        Employee employee = employeeRepository.findById(employeeId);
+        if (employee != null) {
+            Team team = employee.getTeam();
+            if (team == null) return -1;
+            return team.getTeamManager().getEmployeeID();
+        } else return -1;
     }
 
 
-
-
-//    public List<EmployeeDTO>get(int managerId){
+    //    public List<EmployeeDTO>get(int managerId){
 //        return employeeRepository.
 //    }
-    public List<EmployeeDTO>getEmployeeByTeamAndEmployeeRoleNot(Team team,String employeeRole){
-        return employeeRepository.findByTeamAndEmployeeRoleNot(team,"MANAGER");
+    public List<EmployeeDTO> getEmployeeByTeamAndEmployeeRoleNot(Team team, String employeeRole) {
+        return employeeRepository.findByTeamAndEmployeeRoleNot(team, "MANAGER");
     }
 
 
@@ -58,13 +69,18 @@ public class EmployeeService implements UserDetailsService {
     public boolean findEmployee(Employee employee) {
         return employeeRepository.existsById(employee.getEmployeeID());
     }
-    public Employee findByEmployeeEmail(String employeeEmail){
+
+    public Employee findByEmployeeEmail(String employeeEmail) {
         return employeeRepository.findByEmployeeEmail(employeeEmail);
     }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             Employee user = employeeRepository.findByEmployeeEmail(username);
+            if (user == null) {
+                throw new UsernameNotFoundException("User not found with email: " + username);
+            }
             return org.springframework.security.core.userdetails.User.builder()
                     .username(user.getEmployeeEmail())
                     .password(user.getEmployeePassword())

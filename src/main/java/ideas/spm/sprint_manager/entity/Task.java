@@ -10,6 +10,7 @@ public class Task {
     int taskId;
     String taskDetails;
     String taskName;
+    float storyPoint;
     @ManyToOne(fetch = FetchType.EAGER)
             @JoinColumn(name="employeeid")
     Employee taskAssigned;
@@ -64,6 +65,14 @@ public class Task {
 
     public void setTaskDetails(String taskDetails) {
         this.taskDetails = taskDetails;
+    }
+
+    public float getStoryPoint() {
+        return storyPoint;
+    }
+
+    public void setStoryPoint(float storyPoint) {
+        this.storyPoint = storyPoint;
     }
 
     public String getTaskType() {

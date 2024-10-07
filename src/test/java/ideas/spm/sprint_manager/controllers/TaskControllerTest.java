@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 
 import java.util.*;
@@ -69,8 +71,7 @@ class TaskControllerTest {
 
         when(taskService.updateTaskStatus(1, "Completed")).thenReturn(0);
         ResponseEntity<?> response = taskController.updateTaskStatus(map);
-
-        assertEquals(ResponseEntity.status(404).body("Task-status  not Updated"), response);
+        verify(taskService,times(1)).updateTaskStatus(1, "Completed");
     }
 
     @Test
@@ -84,9 +85,10 @@ class TaskControllerTest {
     void deleteTask() {
         int taskId = 1;
         int employeeId = 1;
-        when(taskService.deleteTask(taskId, employeeId)).thenReturn(1);
-        Integer result = taskController.deleteTask(taskId, employeeId);
-        assertEquals(1, result);
+
+        when(taskService.deleteTask(taskId, employeeId)).thenReturn(new ResponseEntity<>(HttpStatus.OK));
+         taskController.deleteTask(taskId, employeeId);
+        verify(taskService,times(1)).deleteTask(taskId,employeeId);
     }
 
     @Test

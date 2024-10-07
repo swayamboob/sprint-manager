@@ -14,7 +14,6 @@ public interface TeamDTO {
     public Employee getTeamManager();
 
     public List<Employee> getTeamMembers();
-
     public List<Task> getTeamTask();
 
     interface Employee{
@@ -27,6 +26,7 @@ public interface TeamDTO {
         int getTaskId();
         String getTaskDetails();
         String getTaskStatus();
+        float getStoryPoint();
     }
 
 }

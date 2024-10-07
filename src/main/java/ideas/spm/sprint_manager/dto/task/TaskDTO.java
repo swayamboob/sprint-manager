@@ -7,7 +7,7 @@ public interface TaskDTO {
 
     String getTaskDetails();
     String getTaskName();
-
+    float getStoryPoint();
     String getTaskStatus();
 
     LocalDate getTaskDeadline();

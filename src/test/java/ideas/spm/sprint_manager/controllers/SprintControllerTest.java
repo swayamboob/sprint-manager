@@ -63,6 +63,7 @@ class SprintControllerTest {
     void deleteSprint() {
         int sprintId=0;
         when(sprintService.deleteSprint(sprintId)).thenReturn(1);
-        assertEquals(sprintController.deleteSprint(sprintId),true);
+        sprintController.deleteSprint(sprintId);
+        verify(sprintService, times(1)).deleteSprint(sprintId);
     }
 }

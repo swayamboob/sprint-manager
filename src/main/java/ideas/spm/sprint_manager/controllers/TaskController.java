@@ -40,9 +40,13 @@ public class TaskController {
     @PutMapping("/employee/update/status")
     ResponseEntity<?> updateTaskStatus(@RequestBody Map<String,String>mp){
         if(taskService.updateTaskStatus(Integer.parseInt(mp.get("taskId")),mp.get("taskStatus"))==1)return ResponseEntity.ok(new Response("Task Status Updated"));
-        else return ResponseEntity.status(404).body("Task-status  not Updated");
+        else return ResponseEntity.status(404).body("Task  not Updated");
     }
 
+    @GetMapping("/employee/mytask/{employeeId}")
+    List<TaskDTO> getMyTask(@PathVariable int employeeId){
+        return taskService.getMyTask(employeeId);
+    }
 
 
     @GetMapping("/employee")
@@ -51,8 +55,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/manager/remove/{taskId}/{employeeId}")
-    public Integer deleteTask(@PathVariable int taskId,@PathVariable int employeeId) {
-        System.out.println(taskId+" ---"+ employeeId);
+    public ResponseEntity<?> deleteTask(@PathVariable int taskId,@PathVariable int employeeId) {
         return taskService.deleteTask(taskId,employeeId);
     }
 

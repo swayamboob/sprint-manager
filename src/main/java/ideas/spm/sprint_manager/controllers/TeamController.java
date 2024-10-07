@@ -6,6 +6,7 @@ import ideas.spm.sprint_manager.repository.TeamRepository;
 import ideas.spm.sprint_manager.service.TeamService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,17 +29,17 @@ public class TeamController {
         return teamService.getTeamByTeamId(teamId);
     }
     @GetMapping("/manager/{managerId}")
-    List<TeamDTO> getTeamsByManager(@PathVariable int managerId){
-        return teamService.getTeamByManagerId(managerId);
+    ResponseEntity<?>getTeamsByManager(@PathVariable int managerId){
+        return ResponseEntity.ok(teamService.getTeamByManagerId(managerId));
     }
 
     @PostMapping("/manager/insert")
-    Team insertTeam(@RequestBody Team team) {
-        return teamService.insertTeam(team);
+    ResponseEntity<?> insertTeam(@RequestBody Team team) {
+        return ResponseEntity.ok(teamService.insertTeam(team));
     }
 
     @DeleteMapping("remove/{teamid}")
-    Integer deleteTeam(@PathVariable int teamid) {
-        return teamService.deleteTeam(teamid);
+    ResponseEntity<?> deleteTeam(@PathVariable int teamid) {
+        return ResponseEntity.ok(teamService.deleteTeam(teamid));
     }
 }
